@@ -9,7 +9,7 @@ Model::Model(const char *filename) : verts_(), faces_(), norms_(), uv_(), diffus
     in.open(filename, std::ifstream::in);
     if (in.fail())
     {
-        std::cout<<"fail"<<std::endl;
+        std::cout << "fail" << std::endl;
         return;
     }
     std::string line;
@@ -108,10 +108,14 @@ void Model::load_texture(std::string filename, const char *suffix, TGAImage &img
     }
 }
 
-TGAColor Model::diffuse(Vec2f uvf)
+Vec3f Model::diffuse(Vec2f uvf)
 {
     Vec2f uv(uvf[0] * diffusemap_.get_width(), uvf[1] * diffusemap_.get_height());
-    return diffusemap_.get(uv[0], uv[1]);
+    TGAColor c = diffusemap_.get(uv[0], uv[1]);
+    Vec3f res;
+    for (int i = 0; i < 3; i++)
+        res[2 - i] = (float)c[i] / 255.f;
+    return res;
 }
 
 Vec3f Model::normal(Vec2f uvf)

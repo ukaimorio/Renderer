@@ -5,25 +5,14 @@
 
 Mat4 view;
 Mat4 projection;
-Mat4 viewport;
 
 Vec3f light_dir = Vec3f(1, 1, 1).normalize();
 Model *model = new Model("C:/Users/22175/Desktop/Renderer/obj/african_head.obj");
-
+int cnt = 0;
 IShader::~IShader()
 {
 }
-/*
-void get_viewport_matrix(int w, int h)
-{
-    viewport = Mat4::identity();
-    viewport[0][0] = w / 2;
-    viewport[1][1] = h / 2;
-    viewport[0][3] = w / 2;
-    viewport[1][3] = h / 2;
-}
-*/
-/*
+
 void get_projection_matrix(float eye_fov, float apsect_ratio, float zNear, float zFar)
 {
     // 裁剪坐标系裁剪坐标系（Clip Coordinates）是OpenGL图形渲染管线中的一个中间坐标系，位于眼坐标系（Eye
@@ -34,27 +23,9 @@ void get_projection_matrix(float eye_fov, float apsect_ratio, float zNear, float
     projection[0][0] = zNear / r;
     projection[1][1] = zNear / t;
     projection[2][2] = (zNear + zFar) / (zNear - zFar);
-    projection[2][3] = 2 * zNear * zFar / (zNear - zFar);                    
-    projection[3][2] = -1;                                                                                                                                                                                                                                                   
-    projection[3][3] = 0;             
-}
-*/
-
-void get_viewport_matrix(int x, int y, int w, int h)
-{
-    viewport = Mat4::identity();
-    viewport[0][3] = x + w / 2.f;
-    viewport[1][3] = y + h / 2.f;
-    viewport[2][3] = depth / 2.f;
-    viewport[0][0] = w / 2.f;
-    viewport[1][1] = h / 2.f;
-    viewport[2][2] = depth / 2.f;
-}
-
-void get_projection_matrix(float coeff)
-{
-    projection = Mat4::identity();
-    projection[3][2] = coeff;
+    projection[2][3] = -2 * zNear * zFar / (zFar - zNear);
+    projection[3][2] = -1;
+    projection[3][3] = 0;
 }
 
 void Lookat(Vec3f eye, Vec3f center, Vec3f up)
@@ -64,17 +35,22 @@ void Lookat(Vec3f eye, Vec3f center, Vec3f up)
     Vec3f w = g * -1;
     Vec3f u = (up ^ w).normalize();
     Vec3f v = (w ^ u).normalize();
-    // Mat4 ratation = Mat4::identity();
-    // Mat4 translation = Mat4::identity();
-    view = Mat4::identity();
-    for (int i = 0; i < 3; i++)
-    {
-        view[0][i] = u[i];
-        view[1][i] = v[i];
-        view[2][i] = w[i];
-        view[i][3] = -center[i];
-    }
-    // view = ratation * translation;
+
+    view[0][0] = u[0];
+    view[0][1] = u[1];
+    view[0][2] = u[2];
+
+    view[1][0] = v[0];
+    view[1][1] = v[1];
+    view[1][2] = v[2];
+
+    view[2][0] = w[0];
+    view[2][1] = w[1];
+    view[2][2] = w[2];
+
+    view[0][3] = -1 * u * eye;
+    view[1][3] = -1 * v * eye;
+    view[2][3] = -1 * w * eye;
 }
 
 Vec3f compute_barycentric2D(float x, float y, const Vec3f *v)
@@ -101,8 +77,47 @@ Vec3f compute_barycentric(Vec2f A, Vec2f B, Vec2f C, Vec2f P)
     return Vec3f(-1, 1, 1); // in this case generate negative coordinates, it will be thrown away by the rasterizator
 }
 
-void triangle(Vec3f *screen_coords, IShader &shader, unsigned char *framebuffer, float *zbuffer)
+Vec3f cal_normal(Vec3f &normal, Vec3f *world_coords, const Vec2f *uv, const Vec2f &in_uv)
 {
+    float x1 = uv[1][0] - uv[0][0];
+    float y1 = uv[1][1] - uv[0][1];
+    float x2 = uv[2][0] - uv[0][0];
+    float y2 = uv[2][1] - uv[0][1];
+    float det = (x1 * y2 - x2 * y1);
+
+    Vec3f e1 = world_coords[1] - world_coords[0];
+    Vec3f e2 = world_coords[2] - world_coords[1];
+
+    Vec3f t = e1 * y2 + e2 * (-y1);
+    Vec3f b = e1 * (-x2) + e2 * e1;
+    t = t / det;
+    b = b / det;
+
+    normal = normal.normalize();
+    t = (t - (t * normal) * normal).normalize();
+    b = (b - (b * normal) * normal - (b * t) * t).normalize();
+
+    Vec3f temp = model->normal(Vec2f(in_uv.x, in_uv.y));
+    Vec3f real_normal = t * temp[0] + b * temp[1] + normal * temp[2];
+    return real_normal;
+}
+
+void triangle(Vec4f *clip_coords, IShader &shader, unsigned char *framebuffer, float *zbuffer)
+{
+    Vec3f screen_coords[3], ndc_coords[3];
+    for (int i = 0; i < 3; i++)
+    {
+        ndc_coords[i][0] = clip_coords[i][0] / clip_coords[i].w;
+        ndc_coords[i][1] = clip_coords[i][1] / clip_coords[i].w;
+        ndc_coords[i][2] = clip_coords[i][2] / clip_coords[i].w;
+    }
+    for (int i = 0; i < 3; i++)
+    {
+        screen_coords[i][0] = 0.5 * (window_width - 1) * (ndc_coords[i][0] + 1.0);
+        screen_coords[i][1] = 0.5 * (window_height - 1) * (ndc_coords[i][1] + 1.0);
+        screen_coords[i][2] = -clip_coords[i].w; // view space z-value
+    }
+    std::cout << cnt++ << std::endl;
     float xmin = 10000, xmax = -10000, ymin = 10000, ymax = -10000;
     for (int i = 0; i < 3; i++)
     {
@@ -121,19 +136,20 @@ void triangle(Vec3f *screen_coords, IShader &shader, unsigned char *framebuffer,
             float gamma = barycentric.z;
             if (alpha < 0 || beta < 0 || gamma < 0)
                 continue;
-            float z = alpha * screen_coords[0].z + beta * screen_coords[1].z + gamma * screen_coords[2].z;
+            float normalizer = 1.0 / (alpha / clip_coords[0].w + beta / clip_coords[1].w + gamma / clip_coords[2].w);
+            float z = (alpha * screen_coords[0].z / clip_coords[0].w + beta * screen_coords[1].z / clip_coords[1].w +
+                       gamma * screen_coords[2].z / clip_coords[2].w) *
+                      normalizer;
             if (zbuffer[x + y * window_width] < z)
             {
-                TGAColor color;
-                if (!shader.fragment(barycentric, color))
-                {
-                    zbuffer[x + y * window_width] = z;
-                    int idx = (x + y * window_width) * 4;
-                    framebuffer[idx] = color.bgra[2];
-                    framebuffer[idx + 1] = color.bgra[1];
-                    framebuffer[idx + 2] = color.bgra[0];
-                    framebuffer[idx + 3] = 255; // alpha通道
-                }
+                Vec3f color;
+                color = shader.fragment(alpha, beta, gamma);
+                zbuffer[x + y * window_width] = z;
+                int idx = (x + y * window_width) * 4;
+                framebuffer[idx] = color[0];
+                framebuffer[idx + 1] = color[1];
+                framebuffer[idx + 2] = color[2];
+                framebuffer[idx + 3] = 255; // alpha通道
             }
         }
     }

@@ -27,6 +27,11 @@ Vec2f Vec2f::operator-(const Vec2f &v) const
 {
     return Vec2f(x - v.x, y - v.y);
 }
+Vec2f Vec2f::operator/(const float &v) const
+{
+    return Vec2f(x / v, y / v);
+}
+
 float Vec2f::dot(const Vec2f &v) const
 {
     return x * v.x + y * v.y;
@@ -79,6 +84,10 @@ Vec3f Vec3f::operator+(const Vec3f &v) const
 Vec3f Vec3f::operator-(const Vec3f &v) const
 {
     return Vec3f(x - v.x, y - v.y, z - v.z);
+}
+Vec3f Vec3f::operator/(const float &v) const
+{
+    return Vec3f(x / v, y / v, z / v);
 }
 Vec3f Vec3f::operator^(const Vec3f &v) const
 {
@@ -169,6 +178,10 @@ Vec4f operator*(const Vec4f &v, float s)
 float operator*(const Vec4f &v1, const Vec4f &v2)
 {
     return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z + v1.w * v2.w;
+}
+Vec3f multiply(const Vec3f &v1, const Vec3f &v2)
+{
+    return Vec3f(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
 }
 
 // Mat3

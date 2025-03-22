@@ -1,24 +1,53 @@
 #include "maths.h"
 #include "shader.h"
+#include <cmath>
 
 Vec4f PhongShader::vertex(int iface, int nthvert)
 {
-    varying_uv[nthvert] = model->uv(iface, nthvert);
-    Vec4f gl_Vertex = to_vec4f(model->vert(iface, nthvert), 1); // read the vertex from .obj file
-    return viewport * projection * view * gl_Vertex;
+    uv[nthvert] = model->uv(iface, nthvert);
+    Vec4f gl_Vertex = to_vec4f(model->vert(iface, nthvert), 1);
+    clip_coords[nthvert] = projection * view * gl_Vertex;
+    normals[nthvert] = model->normal(iface, nthvert);
+    for (int i = 0; i < 3; i++)
+    {
+        world_coords[nthvert][i] = gl_Vertex[i];
+    }
+    return projection * view * gl_Vertex;
 }
 
-bool PhongShader::fragment(Vec3f bar, TGAColor &color)
+Vec3f PhongShader::fragment(float alpha, float beta, float gamma)
 {
-    Vec2f uv = varying_uv[0] * bar[0] + varying_uv[1] * bar[1] + varying_uv[2] * bar[2];
-    Vec3f n = to_vec3f(uniform_MIT * to_vec4f(model->normal(uv), 1)).normalize();
-    Vec3f l = to_vec3f(uniform_M * to_vec4f(light_dir, 1)).normalize();
-    Vec3f r = (n * (n * l * 2.f) - l).normalize();
-    float spec = pow(std::max(r.z, 0.0f), model->specular(uv));
-    float diff = std::max(0.f, n * l);
-    TGAColor c = model->diffuse(uv);
-    color = c;
-    for (int i = 0; i < 3; i++)
-        color[i] = std::min<float>(5 + c[i] * (diff + .6 * spec), 255);
-    return false;
+    float Z = 1.0 / (alpha / clip_coords[0].w + beta / clip_coords[1].w + gamma / clip_coords[2].w);
+    Vec3f in_normal = (alpha * normals[0] / clip_coords[0].w + beta * normals[1] / clip_coords[1].w +
+                       gamma * normals[2] / clip_coords[2].w) *
+                      Z;
+    Vec2f in_uv =
+        (alpha * uv[0] / clip_coords[0].w + beta * uv[1] / clip_coords[1].w + gamma * uv[2] / clip_coords[2].w) * Z;
+    Vec3f in_world_coords = (alpha * world_coords[0] / clip_coords[0].w + beta * world_coords[1] / clip_coords[1].w +
+                             gamma * world_coords[2] / clip_coords[2].w) *
+                            Z;
+    Vec3f real_normal = cal_normal(in_normal, world_coords, uv, in_uv);
+
+    Vec3f ka(0.35, 0.35, 0.35);
+    Vec3f kd = model->diffuse(in_uv);
+    Vec3f ks(0.8, 0.8, 0.8);
+
+    // light information
+    Vec3f l = (Vec3f(1, 1, 1)).normalize();
+    Vec3f light_ambient_intensity = kd;
+    Vec3f light_diffuse_intensity = Vec3f(0.9, 0.9, 0.9);
+    Vec3f light_specular_intensity = Vec3f(0.15, 0.15, 0.15);
+
+    Vec3f result_color(0, 0, 0);
+    Vec3f ambient, diffuse, specular;
+    real_normal = (real_normal).normalize();
+    Vec3f v = (eye - in_world_coords).normalize();
+    Vec3f h = (l + v).normalize();
+
+    ambient = multiply(ka, light_ambient_intensity);
+    diffuse = multiply(kd, light_diffuse_intensity) * std::max(0.f, (l * real_normal));
+    specular = multiply(ks, light_specular_intensity) * std::max(0.0, pow((real_normal * h), 255));
+
+    result_color = ambient + diffuse + specular;
+    return result_color * 255.f;
 }

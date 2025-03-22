@@ -332,6 +332,9 @@ Renderer_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 Renderer_SOURCE_DIR:STATIC=C:/Users/22175/Desktop/Renderer
 
+//Vcpkg root directory
+VCPKG_ROOT:STRING=C:/Users/22175/vcpkg
+
 //Path to a program.
 Vulkan_GLSLANG_VALIDATOR_EXECUTABLE:FILEPATH=Vulkan_GLSLANG_VALIDATOR_EXECUTABLE-NOTFOUND
 
@@ -346,6 +349,9 @@ Vulkan_LIBRARY:FILEPATH=Vulkan_LIBRARY-NOTFOUND
 
 //Path to a program.
 WINDEPLOYQT_EXECUTABLE:FILEPATH=C:/Qt/6.5.3/mingw_64/bin/windeployqt.exe
+
+//Assimp config directory
+assimp_DIR:STRING=C:/Users/22175/vcpkg/installed/x64-windows/share/assimp
 
 
 ########################

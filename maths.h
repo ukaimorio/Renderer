@@ -29,6 +29,7 @@ class Vec2f
     const float &operator[](int index) const;
     Vec2f operator+(const Vec2f &v) const;
     Vec2f operator-(const Vec2f &v) const;
+    Vec2f operator/(const float &v) const;
     float dot(const Vec2f &v) const;
     float norm() const;
     Vec2f &normalize();
@@ -56,6 +57,7 @@ class Vec3f
     const float &operator[](int index) const;
     Vec3f operator+(const Vec3f &v) const;
     Vec3f operator-(const Vec3f &v) const;
+    Vec3f operator/(const float &v) const;
     Vec3f operator^(const Vec3f &v) const;
     float dot(const Vec3f &v) const;
     float norm() const;
@@ -93,6 +95,7 @@ class Vec4f
 Vec4f operator*(float s, const Vec4f &v);
 Vec4f operator*(const Vec4f &v, float s);
 float operator*(const Vec4f &v1, const Vec4f &v2);
+Vec3f multiply(const Vec3f &v1, const Vec3f &v2);
 
 class Mat3
 {

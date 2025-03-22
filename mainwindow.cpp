@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+#include "camera.h"
 #include "maths.h"
 #include <QFileInfo>
 #include <QKeyEvent>
@@ -24,7 +25,7 @@ RenderWidget::RenderWidget(QWidget *parent) : QWidget(parent), isDragging(false)
 
     for (int i = 0; i < window_width * window_height; i++)
     {
-        zbuffer[i] = -std::numeric_limits<float>::max();
+        zbuffer[i] = std::numeric_limits<float>::max();
     }
 
     // 初始化图像
@@ -46,23 +47,20 @@ void RenderWidget::updateRender()
 
     // 更新视图矩阵
     Lookat(eye, center, up);
-    get_viewport_matrix(window_width / 8, window_height / 8, window_width * 3 / 4, window_height * 3 / 4);
-    get_projection_matrix(-1.f / (eye - center).norm());
+    get_projection_matrix(60, (float)(window_width) / window_height, 0.1, 10000);
+    ;
 
     // 渲染
     PhongShader shader;
-    shader.uniform_M = projection * view;
-    shader.uniform_MIT = (projection * view).inverse_transpose();
-
+    shader.eye = eye;
     for (int i = 0; i < model->nfaces(); i++)
     {
-        Vec3f screen_coords[3];
+        Vec4f clip_coords[3];
         for (int j = 0; j < 3; j++)
         {
-            Vec4f clip_coords = shader.vertex(i, j);
-            screen_coords[j] = to_vec3f(clip_coords / clip_coords[3]);
+            clip_coords[j] = shader.vertex(i, j);
         }
-        triangle(screen_coords, shader, framebuffer, zbuffer);
+        triangle(clip_coords, shader, framebuffer, zbuffer);
     }
     update(); // 触发重绘
 }

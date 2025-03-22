@@ -549,5 +549,10 @@ Renderer_autogen/timestamp: \
 	C:/Users/22175/Desktop/Renderer/shader.h \
 	C:/Users/22175/Desktop/Renderer/tgaimage.cpp \
 	C:/Users/22175/Desktop/Renderer/tgaimage.h \
+	C:/Users/22175/vcpkg/installed/x64-windows/share/assimp/assimpConfig.cmake \
+	C:/Users/22175/vcpkg/installed/x64-windows/share/assimp/assimpConfigVersion.cmake \
+	C:/Users/22175/vcpkg/installed/x64-windows/share/assimp/assimpTargets-debug.cmake \
+	C:/Users/22175/vcpkg/installed/x64-windows/share/assimp/assimpTargets-release.cmake \
+	C:/Users/22175/vcpkg/installed/x64-windows/share/assimp/assimpTargets.cmake \
 	C:/Users/22175/Desktop/Renderer/mainwindow.ui \
 	C:/Program\ Files/CMake/bin/cmake.exe
