@@ -4,11 +4,9 @@ A software rasterization renderer developed with C++ and Qt, capable of loading 
 
 ## Rendering Showcase
 
-<img src = “image/spot.png”>
-
-<img src = “image/african_head.png”>
-
-<img src = “image/diablo3_pose.png”>
+![spot](./image/spot.png)
+![african_head](./image/african_head.png)
+![diablo3_pose](./image/diablo3_pose.png)
 
 ## Technical Features
 
@@ -31,4 +29,4 @@ The lighting model uses Phong shading, supporting ambient light, diffuse reflect
 you can clone this repository and build with QT6.2.4
 
 ## Reference
-SunXLei's implementation of (https://github.com/SunXLei/SRender)
+SunXLei's implementation of [SRender](https://github.com/SunXLei/SRender)
