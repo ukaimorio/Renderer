@@ -20,15 +20,10 @@ Vec4f PhongShader::vertex(int iface, int nthvert)
 
 Vec3f PhongShader::fragment(float alpha, float beta, float gamma)
 {
-    float Z = 1.0 / (alpha / clip_coords[0].w + beta / clip_coords[1].w + gamma / clip_coords[2].w);
-    Vec3f in_normal = (alpha * normals[0] / clip_coords[0].w + beta * normals[1] / clip_coords[1].w +
-                       gamma * normals[2] / clip_coords[2].w) *
-                      Z;
-    Vec2f in_uv =
-        (alpha * uv[0] / clip_coords[0].w + beta * uv[1] / clip_coords[1].w + gamma * uv[2] / clip_coords[2].w) * Z;
-    Vec3f in_world_coords = (alpha * world_coords[0] / clip_coords[0].w + beta * world_coords[1] / clip_coords[1].w +
-                             gamma * world_coords[2] / clip_coords[2].w) *
-                            Z;
+    Vec3f bar = Vec3f(alpha, beta, gamma);
+    Vec3f in_normal = perspective_correct_interpolation(bar, clip_coords, normals);
+    Vec2f in_uv = perspective_correct_interpolation(bar, clip_coords, uv);
+    Vec3f in_world_coords = perspective_correct_interpolation(bar, clip_coords, world_coords);
     Vec3f real_normal;
     if (model->has_normal_map())
         real_normal = cal_normal(in_normal, world_coords, uv, in_uv);

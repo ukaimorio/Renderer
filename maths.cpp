@@ -478,3 +478,18 @@ Vec3f to_vec3f(const Vec4f &v)
 {
     return Vec3f(v.x, v.y, v.z);
 }
+
+template <typename T>
+T perspective_correct_interpolation(const Vec3f& bar, const Vec4f* clip_coords, const T* attributes) {
+    T result;
+    float z = 0;
+    for (int i = 0; i < 3; i++) {
+        z += bar[i] / clip_coords[i][3];
+    }
+    z = 1.0f / z;
+    
+    for (int i = 0; i < 3; i++) {
+        result = result + attributes[i] * (bar[i] / clip_coords[i][3]) * z;
+    }
+    return result;
+}

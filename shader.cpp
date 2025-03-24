@@ -6,7 +6,6 @@
 Mat4 view;
 Mat4 projection;
 
-Vec3f light_dir = Vec3f(1, 1, 1).normalize();
 Model *model = new Model("C:/Users/22175/Desktop/Renderer/obj/diablo3_pose.obj");
 int cnt = 0;
 IShader::~IShader()
@@ -30,7 +29,6 @@ void get_projection_matrix(float eye_fov, float apsect_ratio, float zNear, float
 
 void Lookat(Vec3f eye, Vec3f center, Vec3f up)
 {
-    // 见SXLei博客
     Vec3f g = (center - eye).normalize(); // 视线方向
     Vec3f w = g * -1;
     Vec3f u = (up ^ w).normalize();
@@ -60,21 +58,6 @@ Vec3f compute_barycentric2D(float x, float y, const Vec3f *v)
     float c2 = (x * (v[2].y - v[0].y) + (v[0].x - v[2].x) * y + v[2].x * v[0].y - v[0].x * v[2].y) /
                (v[1].x * (v[2].y - v[0].y) + (v[0].x - v[2].x) * v[1].y + v[2].x * v[0].y - v[0].x * v[2].y);
     return Vec3f(c1, c2, 1 - c1 - c2);
-}
-
-Vec3f compute_barycentric(Vec2f A, Vec2f B, Vec2f C, Vec2f P)
-{
-    Vec3f s[2];
-    for (int i = 2; i--;)
-    {
-        s[i][0] = C[i] - A[i];
-        s[i][1] = B[i] - A[i];
-        s[i][2] = A[i] - P[i];
-    }
-    Vec3f u = s[0] ^ s[1];
-    if (std::abs(u[2]) > 1e-2) // dont forget that u[2] is integer. If it is zero then triangle ABC is degenerate
-        return Vec3f(1.f - (u.x + u.y) / u.z, u.y / u.z, u.x / u.z);
-    return Vec3f(-1, 1, 1); // in this case generate negative coordinates, it will be thrown away by the rasterizator
 }
 
 Vec3f cal_normal(Vec3f &normal, Vec3f *world_coords, const Vec2f *uv, const Vec2f &in_uv)
@@ -111,7 +94,7 @@ Vec3f calculate_face_normal(int iface)
     Vec3f e1 = v1 - v0;
     Vec3f e2 = v2 - v0;
 
-    return (e1 ^ e2).normalize(); // 叉乘计算面法线并归一化
+    return (e1 ^ e2).normalize(); 
 }
 
 Vec3f clamp_color(const Vec3f &color)
@@ -123,12 +106,14 @@ Vec3f clamp_color(const Vec3f &color)
 void triangle(Vec4f *clip_coords, IShader &shader, unsigned char *framebuffer, float *zbuffer)
 {
     Vec3f screen_coords[3], ndc_coords[3];
+    //clip world -> ndc world
     for (int i = 0; i < 3; i++)
     {
         ndc_coords[i][0] = clip_coords[i][0] / clip_coords[i].w;
         ndc_coords[i][1] = clip_coords[i][1] / clip_coords[i].w;
         ndc_coords[i][2] = clip_coords[i][2] / clip_coords[i].w;
     }
+    //viewport
     for (int i = 0; i < 3; i++)
     {
         screen_coords[i][0] = 0.5 * (window_width - 1) * (ndc_coords[i][0] + 1.0);
@@ -147,16 +132,18 @@ void triangle(Vec4f *clip_coords, IShader &shader, unsigned char *framebuffer, f
     {
         for (int y = (int)ymin; y <= (int)ymax; y++)
         {
-            Vec3f barycentric = compute_barycentric2D(float(x + 0.5), float(y + 0.5), screen_coords);
-            float alpha = barycentric.x;
-            float beta = barycentric.y;
-            float gamma = barycentric.z;
+            Vec3f bar = compute_barycentric2D(float(x + 0.5), float(y + 0.5), screen_coords);
+            float alpha = bar.x;
+            float beta = bar.y;
+            float gamma = bar.z;
             if (alpha < 0 || beta < 0 || gamma < 0)
                 continue;
-            float normalizer = 1.0 / (alpha / clip_coords[0].w + beta / clip_coords[1].w + gamma / clip_coords[2].w);
-            float z = (alpha * screen_coords[0].z / clip_coords[0].w + beta * screen_coords[1].z / clip_coords[1].w +
-                       gamma * screen_coords[2].z / clip_coords[2].w) *
-                      normalizer;
+            float screen_coords_z[3];
+            for (int i = 0; i < 3; i++)
+            {
+                screen_coords_z[i] = screen_coords[i].z;
+            }
+            float z = perspective_correct_interpolation(bar, clip_coords, screen_coords_z);
             if (zbuffer[x + y * window_width] < z)
             {
                 Vec3f color;
@@ -166,7 +153,7 @@ void triangle(Vec4f *clip_coords, IShader &shader, unsigned char *framebuffer, f
                 framebuffer[idx] = color[0];
                 framebuffer[idx + 1] = color[1];
                 framebuffer[idx + 2] = color[2];
-                framebuffer[idx + 3] = 255; // alpha通道
+                framebuffer[idx + 3] = 255; 
             }
         }
     }

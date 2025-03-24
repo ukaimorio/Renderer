@@ -19,14 +19,6 @@ class RenderWidget : public QWidget
   public:
     RenderWidget(QWidget *parent = nullptr);
     void updateRender();
-    void setEye(const Vec3f &newEye)
-    {
-        eye = newEye;
-    }
-    Vec3f getEye() const
-    {
-        return eye;
-    }
     void paintEvent(QPaintEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;

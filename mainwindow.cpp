@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-#include "camera.h"
 #include "maths.h"
 #include <QFileInfo>
 #include <QKeyEvent>
@@ -13,14 +12,12 @@ RenderWidget::RenderWidget(QWidget *parent) : QWidget(parent), isDragging(false)
     center = Vec3f(0, 0, 0);
     up = Vec3f(0, 1, 0);
 
-    // 设置窗口大小
     setMinimumSize(window_width, window_height);
 
-    //
+    
     framebuffer = (unsigned char *)malloc(sizeof(unsigned char) * window_width * window_height * 4);
     memset(framebuffer, 0, sizeof(unsigned char) * window_width * window_height * 4);
 
-    // 初始化zbuffer
     zbuffer = new float[window_width * window_height];
 
     for (int i = 0; i < window_width * window_height; i++)
@@ -28,16 +25,14 @@ RenderWidget::RenderWidget(QWidget *parent) : QWidget(parent), isDragging(false)
         zbuffer[i] = std::numeric_limits<float>::max();
     }
 
-    // 初始化图像
     currentImage = new TGAImage(window_width, window_height, TGAImage::RGB);
 
-    // 设置焦点策略以接收键盘事件
     setFocusPolicy(Qt::StrongFocus);
 }
 
 void RenderWidget::updateRender()
 {
-    // 清除zbuffer
+    // clear buffer
     for (int i = 0; i < window_width * window_height; i++)
     {
         zbuffer[i] = -std::numeric_limits<float>::max();
@@ -45,12 +40,9 @@ void RenderWidget::updateRender()
 
     memset(framebuffer, 0, sizeof(unsigned char) * window_width * window_height * 4);
 
-    // 更新视图矩阵
     Lookat(eye, center, up);
     get_projection_matrix(60, (float)(window_width) / window_height, 0.1, 10000);
-    ;
 
-    // 渲染
     PhongShader shader;
     shader.eye = eye;
     for (int i = 0; i < model->nfaces(); i++)
@@ -62,14 +54,13 @@ void RenderWidget::updateRender()
         }
         triangle(clip_coords, shader, framebuffer, zbuffer);
     }
-    update(); // 触发重绘
+    update(); 
 }
 
 void RenderWidget::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
 
-    // 直接使用framebuffer创建QImage
     QImage image(framebuffer, window_width, window_height, QImage::Format_RGBA8888);
     painter.drawImage(0, 0, image.mirrored(false, true)); // 垂直翻转
 }
@@ -89,7 +80,6 @@ void RenderWidget::mouseMoveEvent(QMouseEvent *event)
     {
         QPoint delta = event->pos() - lastMousePos;
 
-        // 根据鼠标移动更新视角
         float sensitivity = 0.01f;
         Vec3f right = ((center - eye) ^ up).normalize();
         eye = eye + right * (delta.x() * sensitivity) + up * (delta.y() * sensitivity);
@@ -142,11 +132,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 {
     ui->setupUi(this);
 
-    // 创建渲染窗口
     renderWidget = new RenderWidget(this);
     setCentralWidget(renderWidget);
 
-    // 初始化渲染器
     initializeRenderer();
 }
 
@@ -157,7 +145,5 @@ MainWindow::~MainWindow()
 
 void MainWindow::initializeRenderer()
 {
-    // 这里可以添加模型加载等初始化代码
-
     renderWidget->updateRender();
 }
