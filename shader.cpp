@@ -7,7 +7,7 @@ Mat4 view;
 Mat4 projection;
 
 Vec3f light_dir = Vec3f(1, 1, 1).normalize();
-Model *model = new Model("C:/Users/22175/Desktop/Renderer/obj/spot.obj");
+Model *model = new Model("C:/Users/22175/Desktop/Renderer/obj/diablo3_pose.obj");
 int cnt = 0;
 IShader::~IShader()
 {
@@ -102,23 +102,22 @@ Vec3f cal_normal(Vec3f &normal, Vec3f *world_coords, const Vec2f *uv, const Vec2
     return real_normal;
 }
 
-Vec3f calculate_face_normal(int iface) {
+Vec3f calculate_face_normal(int iface)
+{
     Vec3f v0 = model->vert(iface, 0);
     Vec3f v1 = model->vert(iface, 1);
     Vec3f v2 = model->vert(iface, 2);
-    
+
     Vec3f e1 = v1 - v0;
     Vec3f e2 = v2 - v0;
-    
+
     return (e1 ^ e2).normalize(); // 叉乘计算面法线并归一化
 }
 
-Vec3f clamp_color(const Vec3f& color)
+Vec3f clamp_color(const Vec3f &color)
 {
-    return Vec3f(std::min(1.0f,std::max(0.0f,color.x)),
-    std::min(1.0f, std::max(0.0f, color.y)),
-    std::min(1.0f, std::max(0.0f, color.z))
-    );
+    return Vec3f(std::min(1.0f, std::max(0.0f, color.x)), std::min(1.0f, std::max(0.0f, color.y)),
+                 std::min(1.0f, std::max(0.0f, color.z)));
 }
 
 void triangle(Vec4f *clip_coords, IShader &shader, unsigned char *framebuffer, float *zbuffer)

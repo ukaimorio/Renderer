@@ -55,8 +55,8 @@ Vec3f PhongShader::fragment(float alpha, float beta, float gamma)
     diffuse = multiply(kd, light_diffuse_intensity) * std::max(0.f, (l * real_normal));
     specular = multiply(ks, light_specular_intensity) * std::max(0.0, pow((real_normal * h), 150));
     ambient = clamp_color(ambient);
-diffuse = clamp_color(diffuse);
-specular = clamp_color(specular);
+    diffuse = clamp_color(diffuse);
+    specular = clamp_color(specular);
     result_color = clamp_color(ambient + diffuse + specular);
     return result_color * 255.f;
 }
