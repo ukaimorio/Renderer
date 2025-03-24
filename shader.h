@@ -18,6 +18,8 @@ void get_projection_matrix(float eye_fov, float aspect_ratio, float zNear, float
 Vec3f compute_barycentric2D(float x, float y, const Vec3f *v);
 void triangle(Vec4f *clip_coords, IShader &shader, unsigned char *framebuffer, float *zbuffer);
 Vec3f cal_normal(Vec3f &normal, Vec3f *world_coords, const Vec2f *uv, const Vec2f &in_uv);
+Vec3f calculate_face_normal(int iface);
+Vec3f clamp_color(const Vec3f& color);
 
 class IShader
 {

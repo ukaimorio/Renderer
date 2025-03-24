@@ -47,9 +47,9 @@ Model::Model(const char *filename) : verts_(), faces_(), norms_(), uv_(), diffus
             std::vector<Vec3f> f;
             Vec3f tmp;
             iss >> trash;
-            while (iss >> tmp[0] >> trash >> tmp[1] >> trash >> tmp[2])
+            while (iss >> tmp[0] >> trash >> tmp[1])
             {
-                for (int i = 0; i < 3; i++)
+                for (int i = 0; i < 2; i++)
                     tmp[i]--; // in wavefront obj all indices start at 1, not zero
                 f.push_back(tmp);
             }
@@ -143,4 +143,9 @@ Vec3f Model::normal(int iface, int nthvert)
 {
     int idx = faces_[iface][nthvert][2];
     return norms_[idx].normalize();
+}
+
+bool Model::has_normal_map() const
+{
+    return normalmap_.get_width() > 0;
 }

@@ -7,7 +7,10 @@ Vec4f PhongShader::vertex(int iface, int nthvert)
     uv[nthvert] = model->uv(iface, nthvert);
     Vec4f gl_Vertex = to_vec4f(model->vert(iface, nthvert), 1);
     clip_coords[nthvert] = projection * view * gl_Vertex;
-    normals[nthvert] = model->normal(iface, nthvert);
+    if (model->has_normal_map())
+        normals[nthvert] = model->normal(iface, nthvert);
+    else
+        normals[nthvert] = calculate_face_normal(iface);
     for (int i = 0; i < 3; i++)
     {
         world_coords[nthvert][i] = gl_Vertex[i];
@@ -26,7 +29,11 @@ Vec3f PhongShader::fragment(float alpha, float beta, float gamma)
     Vec3f in_world_coords = (alpha * world_coords[0] / clip_coords[0].w + beta * world_coords[1] / clip_coords[1].w +
                              gamma * world_coords[2] / clip_coords[2].w) *
                             Z;
-    Vec3f real_normal = cal_normal(in_normal, world_coords, uv, in_uv);
+    Vec3f real_normal;
+    if (model->has_normal_map())
+        real_normal = cal_normal(in_normal, world_coords, uv, in_uv);
+    else
+        real_normal = in_normal;
 
     Vec3f ka(0.35, 0.35, 0.35);
     Vec3f kd = model->diffuse(in_uv);
@@ -46,8 +53,10 @@ Vec3f PhongShader::fragment(float alpha, float beta, float gamma)
 
     ambient = multiply(ka, light_ambient_intensity);
     diffuse = multiply(kd, light_diffuse_intensity) * std::max(0.f, (l * real_normal));
-    specular = multiply(ks, light_specular_intensity) * std::max(0.0, pow((real_normal * h), 255));
-
-    result_color = ambient + diffuse + specular;
+    specular = multiply(ks, light_specular_intensity) * std::max(0.0, pow((real_normal * h), 150));
+    ambient = clamp_color(ambient);
+diffuse = clamp_color(diffuse);
+specular = clamp_color(specular);
+    result_color = clamp_color(ambient + diffuse + specular);
     return result_color * 255.f;
 }

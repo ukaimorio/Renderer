@@ -30,5 +30,6 @@ class Model
     Vec3f diffuse(Vec2f uv);
     float specular(Vec2f uv);
     std::vector<int> face(int idx);
+    bool has_normal_map() const;
 };
 #endif //__MODEL_H__
